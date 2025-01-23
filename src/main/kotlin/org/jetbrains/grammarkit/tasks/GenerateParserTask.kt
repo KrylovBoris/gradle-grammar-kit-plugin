@@ -77,6 +77,26 @@ abstract class GenerateParserTask : JavaExec() {
     @get:Input
     abstract val pathToPsiRoot: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val generateForFleet: Property<Boolean>
+
+    @get:Input
+    @get:Optional
+    abstract val generateFileTypeElement: Property<Boolean>
+
+    @get:Input
+    @get:Optional
+    abstract val fileTypeClassFqn: Property<String>
+
+    @get:Input
+    @get:Optional
+    abstract val fileTypeDebugName: Property<String>
+
+    @get:Input
+    @get:Optional
+    abstract val languageClassFqn: Property<String>
+
     /**
      * The output parser file computed from the [pathToParser] property.
      */
@@ -114,5 +134,21 @@ abstract class GenerateParserTask : JavaExec() {
         }
     }
 
-    private fun getArguments() = listOf(targetRootOutputDir, sourceFile).map { it.path }
+    private fun getArguments(): List<String> {
+        val result = listOf(targetRootOutputDir, sourceFile).map { it.path }.toMutableList()
+        if (generateForFleet.orNull == true){
+            result += "--fleet"
+        }
+        if (generateFileTypeElement.orNull == true){
+            result += "--generateFileTypeElement"
+            if (fileTypeClassFqn.isPresent)
+                result += "--className=${fileTypeClassFqn.get()}"
+            if (fileTypeClassFqn.isPresent)
+                result += "--debugName=${fileTypeDebugName.get()}"
+            if (fileTypeClassFqn.isPresent)
+                result += "--languageClass=${languageClassFqn.get()}"
+        }
+
+        return result
+    }
 }

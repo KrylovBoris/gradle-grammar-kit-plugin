@@ -2,9 +2,11 @@
 
 package org.jetbrains.grammarkit.tasks
 
+import org.gradle.api.file.Directory
 import org.gradle.testkit.runner.TaskOutcome.*
 import org.jetbrains.grammarkit.GrammarKitConstants.GENERATE_PARSER_TASK_NAME
 import org.jetbrains.grammarkit.GrammarKitPluginBase
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -26,6 +28,28 @@ class GenerateParserTaskSpec : GrammarKitPluginBase() {
 
         assertTrue(result.output.contains("> Task :$GENERATE_PARSER_TASK_NAME"))
         assertTrue(adjustWindowsPath(result.output).contains("Example.bnf parser generated to ${adjustWindowsPath(dir.canonicalPath)}/gen"))
+        val f = File("${adjustWindowsPath(dir.canonicalPath)}/gen")
+        assertTrue(f.isDirectory)
+    }
+
+    @Test
+    fun `run parser for fleet`() {
+        buildFile.groovy("""
+            generateParser {
+                sourceFile = project.file("${getResourceFile("generateParser/Example.bnf")}")
+                targetRootOutputDir = project.layout.projectDirectory.dir("gen")
+                pathToParser = "/org/jetbrains/grammarkit/IgnoreParser.java"
+                pathToPsiRoot = "/org/jetbrains/grammarkit/psi"
+                generateForFleet = true
+            }
+        """)
+
+        val result = build(GENERATE_PARSER_TASK_NAME)
+
+        assertTrue(result.output.contains("> Task :$GENERATE_PARSER_TASK_NAME"))
+        assertTrue(adjustWindowsPath(result.output).contains("Example.bnf parser generated to ${adjustWindowsPath(dir.canonicalPath)}/gen"))
+        val f = File("${adjustWindowsPath(dir.canonicalPath)}/gen")
+        assertTrue(f.listFiles { file, string -> string == "fleet" }.isNotEmpty())
     }
 
     @Test
